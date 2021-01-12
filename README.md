@@ -34,6 +34,7 @@ Uma das dificuldades dos desenvolvedores de jogos é encontrar uma plataforma de
 - [HTML](https://www.w3schools.com/html/)
 - [CSS](https://developer.mozilla.org/pt-BR/docs/Web/CSS)
 - [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+- [jQuery](https://jquery.com/)
 
 <!--License session-->
 <h3>📝 Licença</h3>
