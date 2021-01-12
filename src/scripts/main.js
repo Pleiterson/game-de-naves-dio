@@ -5,20 +5,30 @@ function start() {
 	$("#fundoGame").append("<div id='inimigo1' class='anima2'></div>");
 	$("#fundoGame").append("<div id='inimigo2'></div>");
     $("#fundoGame").append("<div id='amigo' class='anima3'></div>");
+    $("#fundoGame").append("<div id='placar'></div>");
+    $("#fundoGame").append("<div id='energia'></div>");
     
     var jogo = {}
-    var TECLA = {
-        W: 38,
-        S: 40,
-        D: 68
-    }
-    var velocidade=5;
+    var TECLA = { W: 38, S: 40, D: 68 }
+    var velocidade = 5;
     var posicaoY = parseInt(Math.random() * 334);
-    var podeAtirar=true;
-    var fimdejogo=false;
-
+    var podeAtirar = true;
+    var fimdejogo = false;
+    var pontos = 0;
+    var salvos = 0;
+    var perdidos = 0;
+    var energiaAtual = 3;
+    var somDisparo = document.getElementById("somDisparo");
+    var somExplosao = document.getElementById("somExplosao");
+    var musica = document.getElementById("musica");
+    var somGameover = document.getElementById("somGameover");
+    var somPerdido = document.getElementById("somPerdido");
+    var somResgate = document.getElementById("somResgate");
+    
     jogo.timer = setInterval(loop,30); // deixando o fundo do jogo em loop a cada 30ms
     jogo.pressionou = [];
+    musica.addEventListener("ended", function(){ musica.currentTime = 0; musica.play(); }, false);
+    musica.play();
 
     //Verifica se o usuário pressionou alguma tecla
     $(document).keydown(function(e){
@@ -37,6 +47,8 @@ function start() {
         moveInimigo2();
         moveAmigo();
         colisao();
+        placar();
+        energia();
     }
     
     // função que movimenta o fundo do jogo
@@ -59,11 +71,11 @@ function start() {
 
         if (jogo.pressionou[TECLA.S]) {
             var topo = parseInt($("#jogador").css("top"));
-            $("#jogador").css("top",topo+10);
+            $("#jogador").css("top",topo + 10);
 
             // limitando o helicóptero no final da página
             if (topo>=434) {	
-                $("#jogador").css("top",topo-10);		
+                $("#jogador").css("top",topo - 10);		
             }
         }
         
@@ -108,6 +120,7 @@ function start() {
     // função que realiza o disparo da arma do helicóptero cinza
     function disparo() {
         if (podeAtirar == true) {
+            somDisparo.play();
             podeAtirar = false;
             topo = parseInt($("#jogador").css("top"))
             posicaoX = parseInt($("#jogador").css("left"))
@@ -145,6 +158,7 @@ function start() {
         
         // colisão do jogador (helicóptero) com o inimigo1, helicóptero
         if (colisao1.length > 0) {
+            energiaAtual--;
             inimigo1X = parseInt($("#inimigo1").css("left"));
             inimigo1Y = parseInt($("#inimigo1").css("top"));
             explosao1(inimigo1X,inimigo1Y);
@@ -156,6 +170,7 @@ function start() {
 
         // colisão do jogador (helicóptero) com o inimigo2, caminhão
         if (colisao2.length > 0) {
+            energiaAtual--;
             inimigo2X = parseInt($("#inimigo2").css("left"));
             inimigo2Y = parseInt($("#inimigo2").css("top"));
             explosao2(inimigo2X,inimigo2Y);
@@ -166,6 +181,8 @@ function start() {
 
         // colisão do disparo com o inimigo 1, helicóptero	
         if (colisao3.length > 0) {
+            velocidade = velocidade + 0.3;
+            pontos = pontos + 100;
 	        inimigo1X = parseInt($("#inimigo1").css("left"));
 	        inimigo1Y = parseInt($("#inimigo1").css("top"));		
             explosao1(inimigo1X,inimigo1Y);
@@ -178,6 +195,7 @@ function start() {
 
         // colisão do disparo com o inimigo 2, caminhão
 	    if (colisao4.length > 0) {
+            pontos = pontos + 50;
             inimigo2X = parseInt($("#inimigo2").css("left"));
             inimigo2Y = parseInt($("#inimigo2").css("top"));
             $("#inimigo2").remove();
@@ -189,14 +207,28 @@ function start() {
 
         // colisão do jogador (helicóptero) com o amigo
 	    if (colisao5.length > 0) {
+            salvos++;
+            somResgate.play();
             reposicionaAmigo();
             $("#amigo").remove();
+        }
+
+        // colisão do amigo com o inimigo 2, caminhão
+        if (colisao6.length > 0) {
+            perdidos++;
+            amigoX = parseInt($("#amigo").css("left"));
+            amigoY = parseInt($("#amigo").css("top"));
+            
+            explosao3(amigoX,amigoY);
+            $("#amigo").remove();
+            reposicionaAmigo();
         }
     }
 
     // função da explosão, colisão com o inimigo 1, helicóptero
     function explosao1(inimigo1X,inimigo1Y) {
-        $("#fundoGame").append("<div id ='explosao1'></div");
+        somExplosao.play();
+        $("#fundoGame").append("<div id='explosao1'></div");
         $("#explosao1").css("background-image", "url(./src/assets/images/explosao.png)");
 
         var div = $("#explosao1");
@@ -229,7 +261,8 @@ function start() {
 
     // função da explosão, colisão com o inimigo 2, caminhão
 	function explosao2(inimigo2X,inimigo2Y) {
-        $("#fundoGame").append("<div id = 'explosao2'></div");
+        somExplosao.play();
+        $("#fundoGame").append("<div id='explosao2'></div");
         $("#explosao2").css("background-image", "url(./src/assets/images/explosao.png)");
 
         var div2 = $("#explosao2");
@@ -255,8 +288,49 @@ function start() {
             tempoAmigo = null;
             
             if (fimdejogo == false) {
-                $("#fundoGame").append("<div id ='amigo' class ='anima3'></div>");
+                $("#fundoGame").append("<div id='amigo' class='anima3'></div>");
             }
+        }
+    }
+
+    // função da explosão, colisão do amigo com inimigo 2, caminhão
+    function explosao3(amigoX,amigoY) {
+        somPerdido.play();
+        $("#fundoGame").append("<div id='explosao3' class='anima4'></div");
+        $("#explosao3").css("top",amigoY);
+        $("#explosao3").css("left",amigoX);
+
+        var tempoExplosao3 = window.setInterval(resetaExplosao3, 1000);
+
+        function resetaExplosao3() {
+            $("#explosao3").remove();
+            window.clearInterval(tempoExplosao3);
+            tempoExplosao3 = null;
+        }
+    }
+
+    // função que soma a pontuação do jogo
+    function placar() {
+        $("#placar").html("<h2> Pontos: " + pontos + " Salvos: " + salvos + " Perdidos: " + perdidos + "</h2>");
+    }
+
+    // função que avalia a energia (vida) do jogador, helicóptero cinza
+    function energia() {
+        if (energiaAtual == 3) {
+            $("#energia").css("background-image", "url(./src/assets/images/energia3.png)");
+        }
+
+        if (energiaAtual == 2) {
+            $("#energia").css("background-image", "url(./src/assets/images/energia2.png)");
+        }
+
+        if (energiaAtual == 1) {
+            $("#energia").css("background-image", "url(./src/assets/images/energia1.png)");
+        }
+
+        if (energiaAtual == 0) {
+            $("#energia").css("background-image", "url(./src/assets/images/energia0.png)");
+            //Game Over
         }
     }
 }
